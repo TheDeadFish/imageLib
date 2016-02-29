@@ -1,0 +1,8 @@
+#include "color.cpp"
+#include "image.cpp"
+#include "windows.cpp"
+#include "bitmap.cpp"
+#include "imghlp.cc"
+#include "gif.cpp"
+#include "png.cpp"
+#include "drawing.cpp"
