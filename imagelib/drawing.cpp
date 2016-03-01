@@ -6,10 +6,10 @@ namespace ImageLib {
 void Image::fillImage(DWORD color)
 {
 	int yCount = height; int xLength = width;
-	if(palSize != 0) { byte* dstLine = GetPtr(0, 0);
+	if(palSize != 0) { byte* dstLine = bColors;
 		while(yCount--) { memset(dstLine, color, xLength);
 			PTRADD(dstLine, pitch); }
-	}else {	Color* dstLine = &GetRef(0, 0);
+	}else {	Color* dstLine = cColors;
 		while(yCount--) { std::fill(dstLine, dstLine+xLength,
 			Color(color));	PTRADD(dstLine, pitch); }}
 }
@@ -19,11 +19,11 @@ POINT REGCALL(1) clipRectX(POINT& pos,
 {
 	POINT y = { rc0.top, rc0.bottom };
 	if(y.x > y.y) swapReg(y.x, y.y);
-	max_ref(y.x, 0); min1_ref(y.y, HIWORD(size));
+	max_ref(y.x, 0); min_ref(y.y, HIWORD(size));
 	pos.y = y.x; y.y -= y.x;
 	POINT x = { rc0.left, rc0.right };
 	if(x.x > x.y) swapReg(x.x, x.y);
-	max_ref(x.x, 0); min1_ref(x.y, LOWORD(size));
+	max_ref(x.x, 0); min_ref(x.y, LOWORD(size));
 	pos.x = x.x; return POINT {x.y-x.x, y.y}; 
 }
 
@@ -41,10 +41,10 @@ void Image::fillRect(
 	if((len.x <= 0)||(len.y <= 0)) return;
 	
 	// draw the rectangle
-	if(palSize != 0) { byte* dstLine = GetPtr(pos.x, pos.y);
+	if(palSize != 0) { byte* dstLine = get8(pos.x, pos.y);
 		while(len.y--) { memset(dstLine, color, len.x);
 			PTRADD(dstLine, pitch); }
-	}else { Color* dstLine = &GetRef(pos.x, pos.y);
+	}else { Color* dstLine = get32(pos.x, pos.y);
 		while(len.y--) { std::fill(dstLine, dstLine+len.x,
 			Color(color)); PTRADD(dstLine, pitch); }
 	}
@@ -61,10 +61,10 @@ void Image::fillNotRect(const RECT& rc, DWORD color)
 void Image::drawLineH(int y, int x1, int x2, DWORD color)
 {
 	if(palSize != 0) {
-		byte* curPos = GetPtr(x1, y); byte* endPos = GetPtr(x2, y);
+		byte* curPos = get8(x1, y); byte* endPos = get8(x2, y);
 		while(curPos < endPos) { *curPos = color; curPos++; }
 	} else {
-		Color* curPos = &GetRef(x1, y); Color* endPos = &GetRef(x2, y);
+		Color* curPos = get32(x1, y); Color* endPos = get32(x2, y);
 		while(curPos < endPos) { *curPos = color; curPos++; }
 	}
 }
@@ -72,10 +72,10 @@ void Image::drawLineH(int y, int x1, int x2, DWORD color)
 void Image::drawLineV(int x, int y1, int y2, DWORD color)
 {
 	if(palSize != 0) {
-		byte* curPos = GetPtr(x, y1); byte* endPos = GetPtr(x, y2);
+		byte* curPos = get8(x, y1); byte* endPos = get8(x, y2);
 		while(curPos < endPos) { *curPos = color; PTRADD(curPos, pitch); }
 	} else {
-		Color* curPos = &GetRef(x, y1); Color* endPos = &GetRef(x, y2);
+		Color* curPos = get32(x, y1); Color* endPos = get32(x, y2);
 		while(curPos < endPos) { *curPos = color; PTRADD(curPos, pitch); }
 	}
 }

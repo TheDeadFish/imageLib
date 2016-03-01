@@ -24,7 +24,7 @@ Image& Image::initRef(const Image& that) {
 	memcpyX(this, &that, 1); return *this; }
 Image& Image::initRef(const Image& that, const Rect& rc0)
 {	Rect rc = that.clipRect(rc0);
-	bColors = (byte*)that.GetPtr(rc.left, rc.top);
+	bColors = (byte*)that.getPtr(rc.left, rc.top);
 	width = rc.Width(); height = rc.Height();
 	palette = that.palette;	pitch = that.pitch;
 	CAST(u32, palSize) = CAST(u32, that.palSize); }
@@ -112,9 +112,9 @@ int ImageObj::Load(LPCTSTR fName)
 
 
 // Soul transferance
-int ImageObj::Create(const ImageObj& that)
+int ImageObj::Create(const Image& that)
 {	return Create(that, that.width, that.height); }
-int ImageObj::Create(const ImageObj& that, int w, int h)
+int ImageObj::Create(const Image& that, int w, int h)
 {	
 	this->Delete(); width = w; height = h;	
 	CAST(u32, palSize) = CAST(u32, that.palSize);

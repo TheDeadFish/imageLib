@@ -48,16 +48,42 @@ namespace ImageLib{
 		int nPixels() { return width * height; }
 		int pixSize() const { return ((colType & HAS_PALETTE)
 			? 1 : 4) + (colType & HAS_16BIT); }
-		int sizeLine() const; int sizeLine8() const; int sizeLine32() const;
-		int sizeExtra() const; int sizeExtra8() const;	int sizeExtra32() const;
+		int sizeExtra8(int) const;	int sizeExtra32(int) const;
+		int sizeExtra8() const;	int sizeExtra32() const;
 		Rect clipRect(const Rect& rc) const; Rect getRect() const;
 		SIZE clipRect2(RECT& out, const Rect& rc) const;
-		CONST_FUNC( byte* EndPtr() );
-		CONST_FUNC( byte* GetPtr(int x, int y) );
-		CONST_FUNC( Color& GetRef(int x, int y) );
 		CONST_FUNC2( TMPL(F), void for_each8(const Rect& rc, F fn));
 		CONST_FUNC2( TMPL(F), void for_each32(const Rect& rc, F fn));
 		bool chkPos(uint x, uint y) const;
+		
+		// pixel access
+		CONST_FUNC( byte* EndPtr() );
+		CONST_FUNC( byte* getLn(int y) );
+		CONST_FUNC( byte* getPtr(int x, int y) );
+		CONST_FUNC( byte* get8(int x, int y) );
+		CONST_FUNC( Color* get32(int x, int y) );
+		
+		
+		
+		/*CONST_FUNC( byte* GetPtr8(int x, int y) );
+		CONST_FUNC( byte* GetPtr32(int x, int y) );
+		
+		
+		
+		
+		CONST_FUNC( byte* GetPtr(int x, int y) );
+		CONST_FUNC( Color& GetRef(int x, int y) );*/
+
+
+
+
+
+		
+		
+		
+		
+		
+		
 		
 		// basic drawing
 		void fillImage(DWORD color);
@@ -81,6 +107,8 @@ namespace ImageLib{
 		void strBlt(HDC hdc, const RECT& dst, const RECT& src) const;	
 
 		// construction
+		Image() = default; Image(const Image& that) { initRef(that); }
+		Image(const Image& that, const Rect& rc) { initRef(that, rc); }
 		Image& initRef(const Image& that);
 		Image& initRef(const Image& that, const Rect& rc);
 		int initSize(uint w, uint h, uint colType, uint nBits);
@@ -110,8 +138,8 @@ namespace ImageLib{
 		int FromBmInfo(LPBITMAPV5HEADER bi, BYTE* imgData);
 		
 		// Soul transferance
-		int Create(const ImageObj& that);
-		int Create(const ImageObj& that, int w, int h);
+		int Create(const Image& that);
+		int Create(const Image& that, int w, int h);
 		int Copy(const ImageObj& that);
 		int Copy(const ImageObj& that, const Rect& rc);
 		
@@ -155,19 +183,38 @@ namespace ImageLib{
 	inline ImageObj::~ImageObj() { this->Delete(); }
 
 	// IMPLEMENTATION: geometry access
-	inline int Image::sizeLine() const 			{ return palSize ? width : width*4; }
+	/*(inline int Image::sizeLine() const 			{ return palSize ? width : width*4; }
 	inline int Image::sizeLine8() const 		{ return width; }
-	inline int Image::sizeLine32() const 		{ return width*4; }
-	inline int Image::sizeExtra() const			{ return pitch - sizeLine(); }
-	inline int Image::sizeExtra8() const 		{ return pitch - sizeLine8(); }
-	inline int Image::sizeExtra32() const 		{ return pitch - sizeLine32(); }
+	inline int Image::sizeLine32() const 		{ return width*4; }*
+	inline int Image::sizeExtra() const			{ return pitch - sizeLine(); } */
+	
+	
+	
+	
+	inline int Image::sizeExtra8(int w) const 		{ return pitch - w; }
+	inline int Image::sizeExtra32(int w) const 		{ return pitch - w*4; }
+	inline int Image::sizeExtra8() const 		{ return sizeExtra8(width); }
+	inline int Image::sizeExtra32() const 		{ return sizeExtra32(width); }
+	
+	
+	
+	
 	inline Rect Image::getRect() const			{ return Rect(0,0,width,height); }
 	inline Rect Image::clipRect(const Rect& rc) const 
 		{	return rc.clipRect(width, height); }
 	inline bool Image::chkPos(uint x, uint y) const { return ((x < width)&&(y < height)); }
 	
 	// IMPLEMENTATION:  pixel access
-	CONST_FUNC3(inline, byte* Image::EndPtr(), { return GetPtr(0, height); })
+	CONST_FUNC3(inline, byte* Image::EndPtr(), { return getLn(height); })
+	CONST_FUNC3(inline, byte* Image::getLn(int y), { return bColors+y*pitch; });
+	CONST_FUNC3(inline, byte* Image::getPtr(int x, int y), { return getLn(y)+x*pixSize(); });
+	CONST_FUNC3(inline, byte* Image::get8(int x, int y), { return getLn(y)+x; });
+	CONST_FUNC3(inline, Color* Image::get32(int x, int y), { return ((Color*)getLn(y))+x; });
+	
+	
+	
+	
+	/*
 	CONST_FUNC3(inline, byte* Image::GetPtr(int x, int y), {
 		return &bColors[x + y*pitch]; })
 	CONST_FUNC3(inline, Color& Image::GetRef(int x, int y),  {
@@ -179,7 +226,7 @@ namespace ImageLib{
 	CONST_FUNC3(TMPL(F) inline, void Image::for_each32(const Rect& rc, F fn), {
 		auto linePos = &GetRef(rc.left, rc.top); int width = rc.Width();
 		int height = rc.Height(); for(int y = 0; y < height; y++) { for(int x = 0;
-			x < width; x++) fn(x, y, linePos[x]); PTRADD(linePos, pitch); }})
+			x < width; x++) fn(x, y, linePos[x]); PTRADD(linePos, pitch); }})*/
 }
 
 #endif

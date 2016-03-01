@@ -26,4 +26,5 @@ static int snapToBits(int val)
 #include "color.h"
 #include "image.h"
 #include "imghlp.h"
+#include "resample/resample.h"
 #endif
