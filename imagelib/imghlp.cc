@@ -116,9 +116,9 @@ byte* REGCALL(2) convLineTo32(
 	Image& img, byte* src, byte* dst)
 {
 	int mode = img.colorMode();
-	if(mode == Image::TYPE_ARGB8) return src;
+	if(mode == Image::MODE_ARGB8) return src;
 	int width = img.width; VARFIX(width); Color* dstPos = (Color*)dst;
-	if(mode == Image::TYPE_INDEX) {	Color* pal = img.palette;
+	if(mode == Image::MODE_INDEX) {	Color* pal = img.palette;
 	while(--width >= 0) { WRI( dstPos, pal[*src]); src += 1; } return dst; }
 	else { 	while(--width >= 0) { BGRA16_BGRA(src, dstPos);
 		VARFIX(src); VARFIX(dstPos); src += 8; dstPos += 1; } return dst; }

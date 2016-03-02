@@ -82,14 +82,20 @@ void ImageObj::Delete(void)
 void ImageObj::resetObj(void) {
 	memset(this, 0, sizeof(*this)); }
 
-int ImageObj::Create(uint w, int h, u8 colType_, u8 nBits_)
+
+int ImageObj::Create(uint w, int h, u8 colType_) {
+	return Create(w, h, colType_, 0, 0); }
+int ImageObj::CreateDib(uint w, int h, bool alpha) {
+	return Create(w, h, alpha ? TYPE_ARGB8 : TYPE_RGB8, 0, true); }	
+int ImageObj::Create(uint w, int h, 
+	u8 colType_, u8 nBits_, bool dibMode)
 {
 	this->Delete(); h = abs(h);
 	if((w > 65535)||(h > 65535)) return ERR_PARAM;
 	width = w; height = h; colType = colType_; 
 	nBits = nBits_; nBits = calcNBits();
 	if(colType & HAS_PALETTE) palSize = 1<<nBits;
-	return this->alloc_();
+	return this->alloc_(dibMode);
 }
 
 int ImageObj::Load(LPCTSTR fName)
@@ -112,21 +118,20 @@ int ImageObj::Load(LPCTSTR fName)
 
 
 // Soul transferance
-int ImageObj::Create(const Image& that)
-{	return Create(that, that.width, that.height); }
-int ImageObj::Create(const Image& that, int w, int h)
+int ImageObj::Create(const Image& that, bool dibMode)
+{	return Create(that, that.width, that.height, dibMode); }
+int ImageObj::Create(const Image& that, int w, int h, bool dibMode)
 {	
 	this->Delete(); width = w; height = h;	
 	CAST(u32, palSize) = CAST(u32, that.palSize);
-	int result = alloc_(); if(!result)
-		memcpy(palette, that.palette, palSize*4);
-	return result;
+	ERR_CHK(alloc_(dibMode)); memcpy(palette,
+		that.palette, palSize*4); return 0;
 }
 
-int ImageObj::Copy(const ImageObj& that)
+int ImageObj::Copy(const ImageObj& that, bool dibMode)
 {	
-	int result = Create(that);	if(!result) memcpy(cColors,
-		that.cColors, pitch * height); return result;
+	ERR_CHK(Create(that, dibMode)); memcpy(cColors,
+		that.cColors, pitch * height); return 0;
 }
 
 void ImageObj::Swap(ImageObj& that)
@@ -160,11 +165,10 @@ NO_PALETTE: this->palSize = palSize;
 	nBits = max(nBits, snapToBits(palSize));
 }
 
-
-int ImageObj::alloc_()
+int ImageObj::alloc_(bool dibMode)
 {
 	pitch = calcPitch(width, colType);
-	if(colType & HAS_HBMP) {
+	if(dibMode == true) {
 		assert(!hasPalette()); BITMAPV5HEADER bmInfo;
 		GetBitmapInfo(CAST(BmInfo256, bmInfo), true);
 		hdc = CreateCompatibleDC(NULL);

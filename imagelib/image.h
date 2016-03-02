@@ -29,13 +29,18 @@ namespace ImageLib{
 		
 		// color type
 		enum { HAS_ALPHA = 1, HAS_COLOR = 2, HAS_16BIT = 4,
-			HAS_PALETTE = 8, HAS_RGBA = 3, HAS_HBMP = 16 };
-		enum { TYPE_ARGB8 = 0, TYPE_ARGB16 = 4, TYPE_INDEX = 8 };
+			HAS_PALETTE = 8, HAS_RGBA = 3 };
+		enum { MODE_ARGB8 = 0, MODE_ARGB16 = 4, MODE_INDEX = 8 };
 		int colorMode() { return colType & (HAS_16BIT | HAS_PALETTE); }
 		
 		
-		
-		
+		// high level types
+		enum { TYPE_INDEX = HAS_PALETTE, TYPE_GRY8 = 0, TYPE_AGRY8 = HAS_ALPHA,
+			TYPE_GRY16 = HAS_16BIT, TYPE_AGRY16 = HAS_16BIT | HAS_ALPHA,
+			TYPE_RGB8 = HAS_COLOR, TYPE_RGB16 = HAS_16BIT | HAS_COLOR,
+			TYPE_ARGB8 = HAS_COLOR | HAS_ALPHA,
+			TYPE_ARGB16 = HAS_16BIT | HAS_COLOR | HAS_ALPHA 
+		};
 			
 		int calcNBits(u8 colType_) const; 
 		int calcNBits() const { return calcNBits(colType); }
@@ -133,23 +138,24 @@ namespace ImageLib{
 	public:
 		// Creation
 		ImageObj();	~ImageObj(); void Delete(void);
-		int Create(uint w, int h, u8 colType, u8 nBits = 0);
+		int Create(uint w, int h, u8 colType,
+			u8 nBits = 0, bool dibMode = 0);
+		int Create(uint w, int h, u8 colType);
+		int CreateDib(uint w, int h, bool alpha = 0);
+		
+			
 		int Load(LPCTSTR file); int FromClip(HWND hwnd);
 		int FromBmInfo(LPBITMAPV5HEADER bi, BYTE* imgData);
 		
 		// Soul transferance
-		int Create(const Image& that);
-		int Create(const Image& that, int w, int h);
-		int Copy(const ImageObj& that);
-		int Copy(const ImageObj& that, const Rect& rc);
-		
-		
-		
-		
-		
-		
-		
-		
+		int Create(const Image& that, bool dibMode = 0);
+		int Create(const Image& that, int w, int h, bool dibMode = 0);
+		int Copy(const ImageObj& that, bool dibMode = 0);
+		int Copy(const ImageObj& that, 
+			const Rect& rc, bool dibMode = 0);
+			
+			
+			
 		void Swap(ImageObj& that);
 		void setPalette(Color* palette, uint palSize);
 		
@@ -166,7 +172,7 @@ namespace ImageLib{
 
 	private:
 		HDC hdc;
-		int alloc_(); void resetObj();
+		int alloc_(bool dibMode); void resetObj();
 		void CopyBmBuffer(byte* imgData, int biHeight);
 		void Copy(const Image& that);
 		int LoadBmp(void* data, int len);
