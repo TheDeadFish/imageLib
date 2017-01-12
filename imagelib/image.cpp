@@ -51,17 +51,15 @@ Image::alloc_t Image::alloc(uint colType)
 
 } 
 
-int Image::Save(LPCTSTR file, int format)
-{
-	// load file into memory
-	FILE* fp = _tfopen(file, _T("wb"));
-	if(fp == NULL)
-		return NOT_FOUND;
-		
-	int result = SaveBitmap(fp);
-	fclose(fp);
-	return result;
-}
+int Image::Save(LPCTSTR fName, int format, void* opts) {
+	FILE* fp = _tfopen(fName, _T("wb")); if(!fp) return NOT_FOUND;
+	SCOPE_EXIT(fclose(fp)); return Save((FileOut*) fp, format, opts); }
+int Image::Save(loadFile_t& data, int format, void* opts) {
+	FileOut fo; int result = Save(&fo, format, opts);
+	if(result > 0) { data = fo.getData(); } else { 
+	free(fo.data); data = {0,0}; } return result; }	
+int Image::Save(FileOut* fo, int format, void* opts) {
+	return SaveBitmap(fo, opts); }
 
 bool Image::IsCompatible(const Image& that) const
 {
@@ -98,24 +96,27 @@ int ImageObj::Create(uint w, int h,
 	return this->alloc_(dibMode);
 }
 
+int ImageObj::Load(void* data, int size)
+{
+	// check header
+	if(size >= 4) {
+	if(*(word*)data == 0x4D42)
+		return LoadBmp(data, size);
+	if(*(uint*)data == 0x38464947)
+		return LoadGif(data, size);
+	if(*(uint*)data == 0x474E5089)
+		return loadPng(data, size);
+	} return BAD_IMAGE;	
+}
+
 int ImageObj::Load(LPCTSTR fName)
 {
 	// load file
 	auto file = loadFile(fName); if(file == NULL) return 
 		isNeg(file.size) ? NOT_FOUND : ERR_ALLOC;
 	SCOPE_EXIT(free(file.data));
-	
-	// check header
-	if(file.size >= 4) {
-	if(*(word*)file.data == 0x4D42)
-		return LoadBmp(file.data, file.size);
-	if(*(uint*)file.data == 0x38464947)
-		return LoadGif(file.data, file.size);
-	if(*(uint*)file.data == 0x474E5089)
-		return loadPng(file.data, file.size);
-	} return BAD_IMAGE;
+	return Load(file.data, file.size);
 }
-
 
 // Soul transferance
 int ImageObj::Create(const Image& that, bool dibMode)

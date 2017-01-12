@@ -99,12 +99,11 @@ namespace ImageLib{
 		void drawLineH(int y, int x1, int x2, DWORD color);
 		void drawLineV(int x, int y1, int y2, DWORD color);
 
-		// saving / display
-		enum { FORMAT_BITMAP, FORMAT_PNG };
+		// display / clipboard 
 		enum{ ERR_NONE, ERR_PARAM,	ERR_ALLOC, ERR_SYSTEM,
 			NOT_FOUND,	BAD_IMAGE, USP_IMAGE, CLIP_NODATA };
 		int GetBitmapInfo(struct BmInfo256& bi, bool bltMode) const;
-		int Save(LPCTSTR file, int format); int ToClip(HWND hwnd);
+		int ToClip(HWND hwnd);
 		void bitBlt(HDC hdc, int x, int y) const;
 		void bitBlt(HDC hdc, int x, int y, int w, int h) const;
 		void bitBlt(HDC hdc, int x, int y, const RECT& src) const;
@@ -125,9 +124,15 @@ namespace ImageLib{
 		SHITSTATIC uint calcPitch(uint width, uint colType) {
 			return (colType & HAS_PALETTE) ? ALIGN4(width)
 			: ((colType & HAS_16BIT) ? width*8 : width*4); }
+			
+		// saving interface
+		enum { FORMAT_BITMAP, FORMAT_PNG };
+		int Save(LPCTSTR fName, int format, void* opts = 0);
+		int Save(loadFile_t& data, int format, void* opts = 0);
+		int Save(FileOut* fo, int format, void* opts = 0);
 
 	protected:
-		int SaveBitmap(FILE* fp);
+		int SaveBitmap(FileOut*, void*);
 		enum{ CLIP_WAIT = 100,
 			CLIP_TRYS = 12 };
 	};
@@ -143,7 +148,7 @@ namespace ImageLib{
 		int Create(uint w, int h, u8 colType);
 		int CreateDib(uint w, int h, bool alpha = 0);
 		
-			
+		int Load(void* data, int size);
 		int Load(LPCTSTR file); int FromClip(HWND hwnd);
 		int FromBmInfo(LPBITMAPV5HEADER bi, BYTE* imgData);
 		

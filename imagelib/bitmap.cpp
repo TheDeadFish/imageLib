@@ -3,7 +3,10 @@
 
 #include <malloc.h>
 #include "imageLib.h"
+#include "bmprle.cpp"
 namespace ImageLib{
+
+#define IFRET(...) if(auto result = __VA_ARGS__) return result;
 
 int bmCalcPitch(LPBITMAPV5HEADER bi) { return ALIGN(
 	bi->bV5Width * bi->bV5BitCount, 31) >> 3; }
@@ -37,26 +40,53 @@ int Image::GetBitmapInfo(BmInfo256& bi, bool blitMode) const
 	return bmCalcPitch((LPBITMAPV5HEADER)&bi);
 }
 
-int Image::SaveBitmap(FILE* fp)
+int Image::SaveBitmap(FileOut* fo, void* opts)
 {
-	// write bitmap header
+	// prepare bitmap header
 	PACK1(struct { BITMAPFILEHEADER fh; BmInfo256 bmi; } bi;)
 	int bmPitch = GetBitmapInfo(bi.bmi, false);
 	bi.fh.bfType = 0x4D42; bi.fh.bfReserved1 = 0; bi.fh.bfReserved2 = 0;
 	bi.fh.bfOffBits = sizeof(bi.fh) + bi.bmi.getSize();
-	bi.fh.bfSize = bi.fh.bfOffBits + bmPitch * height;
-	if(fwrite(&bi.fh, bi.fh.bfOffBits, 1, fp) != 1)
-		return ERR_SYSTEM;
-		
-	// write line data
-	if(setvbuf(fp, NULL, _IOFBF, bmPitch+2))
-		return ERR_SYSTEM;
-	auto packLine = linePackFunc(bi.bmi.bV5BitCount);
-	byte* src = EndPtr();
-	while(src > bColors) { src -= pitch;
-		packLine(src, fBuf(fp, bmPitch), width);
-		if(wBuf(fp) < 0) return ERR_SYSTEM; 
+	
+	// calculate size, write header
+	bi.fh.bfSize = bmPitch * height; 
+	if(opts) { rle_initBmpHeader(&bi.fh,
+		bColors, EndPtr(), pitch);
+	} bi.fh.bfSize += bi.fh.bfOffBits;
+	IFRET(fo->reserve(bi.fh.bfSize));
+	IFRET(fo->write(&bi.fh, bi.fh.bfOffBits));
+	
+	if(rle_rleMode(&bi.fh))
+	{
+		// write rle line data
+		IFRET(fo->vbuf(rle_maxLine(&bi.fh)));
+		auto rleLnFn = rle_lineFunc(&bi.fh);
+		byte* src = EndPtr();
+		while(src > bColors) { src -= pitch;
+			IFRET(fo->write(rleLnFn(fo->buff(),
+			src, width)-fo->buff())); }
+
+	} else {
+	
+		// write line data
+		IFRET(fo->vbuf(bmPitch));
+		auto packLine = linePackFunc(bi.bmi.bV5BitCount);
+		byte* src = EndPtr();
+		while(src > bColors) { src -= pitch;
+			packLine(src, fo->buff(), width);
+			IFRET(fo->write(bmPitch)); }
 	}
+	
+	
+	
+	
+	
+
+
+		
+	// write rle line data
+		
+		
 	return 0;
 }
 
@@ -99,20 +129,36 @@ int ImageObj::FromBmInfo(LPBITMAPV5HEADER bi, BYTE* imgData)
 	if(int errCode = Create(bi->bV5Width, bi->bV5Height,
 		colType_, bi->bV5BitCount)) return errCode;
 	if(biClrUsed) setPalette(colTable, biClrUsed);
-		
-	// copy pixel data
-	int biPitch = bmCalcPitch(bi);
-	if(bi->bV5Height > 0) {
-		imgData += biPitch*(height-1);
-		biPitch = -biPitch; }
-	auto unpackLine = lineUnpackFunc(nBits);
-	byte* dst = bColors;
-	int count = height; while(count--) {
-		unpackLine(imgData, dst, width);
-		imgData += biPitch; dst += pitch; }		
-
 	
-		
+	// get inverted pitch
+	byte* dst = bColors; 
+	int invPitch = pitch;
+	if(bi->bV5Height > 0) { 
+		dst += invPitch*(height-1);
+		invPitch = -invPitch; }
+
+	if((bi->bV5Compression == BI_RLE4)
+	||(bi->bV5Compression == BI_RLE8))
+	{
+		// copy rle pixel data
+		BYTE* imgDataEnd = imgData + bi->bV5SizeImage;
+		auto fn = (bi->bV5Compression == BI_RLE8) ?
+			rle_decodeLine8 : rle_decodeLine4;
+		int count = height; while(count--) {
+			BYTE* dst0 = dst; imgData = fn(imgData, 
+				imgDataEnd,	dst0, dst + pitch);
+			if(!imgData) return BAD_IMAGE; dst += invPitch; }
+
+	} else {
+	
+		// copy pixel data
+		int biPitch = bmCalcPitch(bi);
+		auto unpackLine = lineUnpackFunc(nBits);
+		int count = height; while(count--) {
+			unpackLine(imgData, dst, width);
+			imgData += biPitch; dst += invPitch; }		
+	}
+
 	/* determin alpha type
 	if(bi->biBitCount == 32)
 	{
