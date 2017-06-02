@@ -67,7 +67,7 @@ int ResizeResample(ImageObj& dst, const Image& src,
 
 	// create destination
 	ImageObj tmp;
-	ERR_CHK(tmp.Create(src, w, h));
+	IFRET(tmp.Create(src, w, h));
 	Image dstImg(tmp, rc0);
 	tmp.fillNotRect(rc0, bkgnd);
 

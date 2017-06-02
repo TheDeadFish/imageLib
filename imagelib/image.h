@@ -128,7 +128,7 @@ namespace ImageLib{
 		// saving interface
 		enum { FORMAT_BITMAP, FORMAT_PNG };
 		int Save(LPCTSTR fName, int format, void* opts = 0);
-		int Save(loadFile_t& data, int format, void* opts = 0);
+		int Save(xarray<byte>& data, int format, void* opts = 0);
 		int Save(FileOut* fo, int format, void* opts = 0);
 
 	protected:

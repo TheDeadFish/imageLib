@@ -54,9 +54,9 @@ Image::alloc_t Image::alloc(uint colType)
 int Image::Save(LPCTSTR fName, int format, void* opts) {
 	FILE* fp = _tfopen(fName, _T("wb")); if(!fp) return NOT_FOUND;
 	SCOPE_EXIT(fclose(fp)); return Save((FileOut*) fp, format, opts); }
-int Image::Save(loadFile_t& data, int format, void* opts) {
+int Image::Save(xarray<byte>& data, int format, void* opts) {
 	FileOut fo; int result = Save(&fo, format, opts);
-	if(result > 0) { data = fo.getData(); } else { 
+	if(result == 0) { data = fo.getData(); } else { 
 	free(fo.data); data = {0,0}; } return result; }	
 int Image::Save(FileOut* fo, int format, void* opts) {
 	return SaveBitmap(fo, opts); }
@@ -125,13 +125,13 @@ int ImageObj::Create(const Image& that, int w, int h, bool dibMode)
 {	
 	this->Delete(); width = w; height = h;	
 	CAST(u32, palSize) = CAST(u32, that.palSize);
-	ERR_CHK(alloc_(dibMode)); memcpy(palette,
+	IFRET(alloc_(dibMode)); memcpy(palette,
 		that.palette, palSize*4); return 0;
 }
 
 int ImageObj::Copy(const ImageObj& that, bool dibMode)
 {	
-	ERR_CHK(Create(that, dibMode)); memcpy(cColors,
+	IFRET(Create(that, dibMode)); memcpy(cColors,
 		that.cColors, pitch * height); return 0;
 }
 

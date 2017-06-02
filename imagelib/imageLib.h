@@ -12,7 +12,7 @@ namespace ImageLib {
 struct FileOut {
 	byte* curPos; int mode; int maxSize; byte* data;
 	FileOut() : mode(INT_MIN),	maxSize(0), data(0) {}
-	loadFile_t getData() { return {data, curPos-data}; }
+	xarray<byte> getData() { return {data, curPos-data}; }
 	bool memMode(void) { return mode == INT_MIN; }
 	byte* buff(void) { return curPos; }	
 	int vbuf(int len); int reserve(int len);
@@ -31,5 +31,4 @@ class ImageObj;
 #include "color.h"
 #include "imghlp.h"
 #include "image.h"
-#include "resample/resample.h"
 #endif

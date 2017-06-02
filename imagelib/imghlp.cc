@@ -44,7 +44,7 @@ convLineWW_(convLine4To8, CL8TB(4) CL8TE(15));
 // pack/unpack RGB <-> ARGB
 void REGCALL(2) convLine32To24(byte* src, byte* dst, int width) {
 	for(auto& pix : Range((DWORD*)src, width)) {
-		*(DWORD*)dst = pix; PTRADD(dst, 3); } }
+		*(RGB8*)dst = *(RGB8*)&pix; PTRADD(dst, 3); } }
 void REGCALL(2) convLine64To48(byte* src, byte* dst, int width) {
 	for(auto& pix : Range((INT64*)src, width)) {
 		*(INT64*)dst = pix; PTRADD(dst, 6); } }

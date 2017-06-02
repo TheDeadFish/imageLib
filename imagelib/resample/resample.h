@@ -2,7 +2,7 @@
 // DeadFish Shitware 2014
 #ifndef _RESAMPLE_H_
 #define _RESAMPLE_H_
-//#include "imageLib.h"
+#include "imageLib.h"
 
 namespace ImageLib{
 

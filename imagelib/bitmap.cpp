@@ -1,12 +1,13 @@
 // DeadFish image library
 // Windows Bitmap functions
 
+#include "stdshit.h"
+
+
 #include <malloc.h>
 #include "imageLib.h"
 #include "bmprle.cpp"
 namespace ImageLib{
-
-#define IFRET(...) if(auto result = __VA_ARGS__) return result;
 
 int bmCalcPitch(LPBITMAPV5HEADER bi) { return ALIGN(
 	bi->bV5Width * bi->bV5BitCount, 31) >> 3; }

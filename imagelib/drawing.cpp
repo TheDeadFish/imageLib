@@ -1,6 +1,9 @@
 // Image handling library
 // Simple drawing routines
 // DeadFish Shitware 2014
+#include "stdshit.h"
+#include "imageLib.h"
+
 namespace ImageLib {
 
 void Image::fillImage(DWORD color)

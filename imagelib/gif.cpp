@@ -82,7 +82,6 @@ struct GifLzwDecodeState
 
 template<class T,class U> T pstAdd(T&ptr,U delta) {
 	T tmpPtr=ptr; ptr+=delta; return tmpPtr; }
-#define IFRET(...) if(auto result = __VA_ARGS__) return result;
 	
 struct VoidLen : Void { int len; VoidLen() = default;
 	VoidLen(Void buff, int l) : Void(buff), len(l) {} };

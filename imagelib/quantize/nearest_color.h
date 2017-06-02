@@ -1,6 +1,6 @@
 #ifndef _NEAREST_COLOR_H_
 #define _NEAREST_COLOR_H_
-#include "..\imageLib.h"
+#include "imageLib.h"
 
 namespace ImageLib{
 

@@ -52,7 +52,7 @@ enum { TYPE_IHDR = 0x52444849,
 	TYPE_IEND = 0x444E4549 };
 	
 struct CHNK {
-	uint len; uint type; byte data[];
+	uint len; uint type; byte data[0];
 	uint Len() { return bswap32(len); }
 	int check(byte* endPos) { if((data+4) > endPos) return -1;
 		uint len = Len(); return ((data+4+len) > endPos) ? -1 : len; }
@@ -60,12 +60,12 @@ struct CHNK {
 };
 
 
-struct PLTE : CHNK { RGB8 pal[];
+struct PLTE : CHNK { RGB8 pal[0];
 	int check2() { uint len = Len();
 		if((len > 768)||(len % 3))
 			return -1; return len / 3; }};		
 struct tRNS : CHNK { union { u16 tg;
-	RGB16B trgb; u8 ridx[]; }; };
+	RGB16B trgb; u8 ridx[0]; }; };
 
 struct IHDR : CHNK {
 	uint width, height;

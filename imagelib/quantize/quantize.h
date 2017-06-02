@@ -1,6 +1,6 @@
 #ifndef _COLOR_QUANTIZE_H_
 #define _COLOR_QUANTIZE_H_
-#include "../imageLib.h"
+#include "imageLib.h"
 namespace ImageLib{
 
 #define SPLITMODE_MEDIAN	0x00
