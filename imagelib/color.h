@@ -72,6 +72,8 @@ ColorX_TMPL struct ColorX_
 	int makeUnique(int length);
 	bool isUnique(int count, ColorX_ color);
 	int diff3(const ColorX_& that);
+	int alphaType(int length);
+	int alphaType(int w, int h, int pitch);
 };
 
 ColorX_TMPX(struct)::SideMinMax { ColorX_ minCorner; ColorX_ maxCorner; };

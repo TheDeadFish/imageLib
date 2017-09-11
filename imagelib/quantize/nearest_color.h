@@ -19,10 +19,22 @@ struct nearest_color
 	
 	// line conversion
 	void convLine32ToIdx(byte* src, byte* dst, int width);
+	void convLine32To32(byte* src, byte* dst, int width);
 };
 
 void nearest_conv(Image& src, Image& dst, 
 	LineConvFunc2 fn = &copyLine32, size_t arg = 0);
+void nearest_conv(Image& src, Image& dst, Color* pal, int psz,
+	LineConvFunc2 fn = &copyLine32, size_t arg = 0);
 
+int nearest_conv(ImageObj& img, Color* pal, int psz,
+	LineConvFunc2 fn = &copyLine32, size_t arg = 0);
+int nearest_conv32(ImageObj& img, Color* pal, int psz,
+	LineConvFunc2 fn = &copyLine32, size_t arg = 0);
+	
+
+	
+	
+	
 }
 #endif

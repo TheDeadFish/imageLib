@@ -3,7 +3,14 @@
 
 namespace ImageLib{
 
-int Image::calcNBits(u8 colType) const
+int Image::alphaType(void) const
+{
+	return (colType & HAS_PALETTE) ?
+		palette->alphaType(palSize) :
+		cColors->alphaType(width, height, pitch);
+}
+
+int Image::calcNBits(int colType) const
 {
 	if(colType & HAS_PALETTE) return min(8,
 		max(nBits, snapToBits(palSize)));
@@ -51,8 +58,8 @@ Image::alloc_t Image::alloc(uint colType)
 
 } 
 
-int Image::Save(LPCTSTR fName, int format, void* opts) {
-	FILE* fp = _tfopen(fName, _T("wb")); if(!fp) return NOT_FOUND;
+int Image::Save(LPCSTR fName, int format, void* opts) {
+	FILE* fp = fopen(fName, "wb"); if(!fp) return NOT_FOUND;
 	SCOPE_EXIT(fclose(fp)); return Save((FileOut*) fp, format, opts); }
 int Image::Save(xarray<byte>& data, int format, void* opts) {
 	FileOut fo; int result = Save(&fo, format, opts);
@@ -81,20 +88,44 @@ void ImageObj::resetObj(void) {
 	memset(this, 0, sizeof(*this)); }
 
 
-int ImageObj::Create(uint w, int h, u8 colType_) {
+int ImageObj::Create(uint w, int h, int colType_) {
 	return Create(w, h, colType_, 0, 0); }
 int ImageObj::CreateDib(uint w, int h, bool alpha) {
 	return Create(w, h, alpha ? TYPE_ARGB8 : TYPE_RGB8, 0, true); }	
+	
 int ImageObj::Create(uint w, int h, 
-	u8 colType_, u8 nBits_, bool dibMode)
+	int colType_, int nBits_, BOOL dibMode)
 {
 	this->Delete(); h = abs(h);
 	if((w > 65535)||(h > 65535)) return ERR_PARAM;
 	width = w; height = h; colType = colType_; 
 	nBits = nBits_; nBits = calcNBits();
-	if(colType & HAS_PALETTE) palSize = 1<<nBits;
-	return this->alloc_(dibMode);
+	pitch = calcPitch(width, colType);
+	
+	// allocate pixels
+	if(dibMode) { BITMAPV5HEADER bmInfo;
+		GetBitmapInfo(CAST(BmInfo256, bmInfo), true);
+		if((!(hdc = CreateCompatibleDC(NULL)))
+		||(! SelectObject(hdc, CreateDIBSection(hdc, (BITMAPINFO*)
+			&bmInfo, DIB_RGB_COLORS, (VOID**)&cColors, NULL, 0))))
+		{	ALLOC_ERR: this->Delete(); return ERR_ALLOC; }
+	} else { cColors = (Color*)malloc(pitch * height);
+		if( cColors == NULL ) goto ALLOC_ERR; }
+	
+	// allocate palette
+	if(colType & HAS_PALETTE) {
+		palSize = 1<<nBits;	
+		palette = (Color*)malloc(1024);
+		if(palette == NULL) goto ALLOC_ERR; }
+	return ERR_NONE;
 }
+
+int ImageObj::Create(uint w, int h,
+	Color* p, int psz, BOOL dibMode) {
+	IFRET(Create(w, h, HAS_PALETTE, 0, dibMode));
+	setPalette(p, psz); return 0; }
+int ImageObj::Create(const Image& that, Color* p, int psz) {
+	return Create(that.width, that.height, p, psz); }
 
 int ImageObj::Load(void* data, int size)
 {
@@ -109,7 +140,7 @@ int ImageObj::Load(void* data, int size)
 	} return BAD_IMAGE;	
 }
 
-int ImageObj::Load(LPCTSTR fName)
+int ImageObj::Load(LPCSTR fName)
 {
 	// load file
 	auto file = loadFile(fName); if(file == NULL) return 
@@ -123,10 +154,9 @@ int ImageObj::Create(const Image& that, bool dibMode)
 {	return Create(that, that.width, that.height, dibMode); }
 int ImageObj::Create(const Image& that, int w, int h, bool dibMode)
 {	
-	this->Delete(); width = w; height = h;	
-	CAST(u32, palSize) = CAST(u32, that.palSize);
-	IFRET(alloc_(dibMode)); memcpy(palette,
-		that.palette, palSize*4); return 0;
+	IFRET(Create(w, h, that.colType, that.nBits, 0));
+	if(colType & HAS_PALETTE) setPalette(that.palette, palSize);
+	return 0;
 }
 
 int ImageObj::Copy(const ImageObj& that, bool dibMode)
@@ -150,44 +180,20 @@ void ImageObj::Swap(ImageObj& that)
 void ImageObj::setPalette(Color* palette, uint palSize)
 {
 	// determin alpha type
-	if(palSize == 0) goto NO_PALETTE; 
-	ImageLib_assert(palSize <= 256);
-	{ DWORD mask = 0;
-	BYTE first = palette->GetA();
-	for(Color color : Range(palette, palSize))
-	  if(color.GetA() != first) goto GOT_APLHA;
-	if((first == 0)||(first == 255)) mask = 0xFF000000;
-	
+	ImageLib_assert((palSize <= 256)
+		&&(colType & HAS_PALETTE));
+	DWORD mask = palette->alphaType(
+		palSize) ? 0xFF000000 : 0;
+		
 	// copy alpha array
-GOT_APLHA:
 	for(int i : Range(0,(int)palSize))
-		this->palette[i] = palette[i] | mask; }		
-NO_PALETTE: this->palSize = palSize;
+		this->palette[i] = palette[i] | mask;
+	this->palSize = palSize;
 	nBits = max(nBits, snapToBits(palSize));
+	
+	// update DIB color table
+	if(hdc) { SetDIBColorTable(hdc,
+		0, palSize, (RGBQUAD*)palette); }
 }
-
-int ImageObj::alloc_(bool dibMode)
-{
-	pitch = calcPitch(width, colType);
-	if(dibMode == true) {
-		assert(!hasPalette()); BITMAPV5HEADER bmInfo;
-		GetBitmapInfo(CAST(BmInfo256, bmInfo), true);
-		hdc = CreateCompatibleDC(NULL);
-		if(! SelectObject(hdc, CreateDIBSection(hdc, (BITMAPINFO*)
-			&bmInfo, DIB_RGB_COLORS, (VOID**)&cColors, NULL, 0)))
-		{	this->Delete(); return ERR_ALLOC; }
-	} else {
-		cColors = (Color*)malloc(pitch * height);
-		if( cColors == NULL ) { ALLOC_ERR:
-			this->Delete(); return ERR_ALLOC; }
-		if(colType & HAS_PALETTE) {
-			palette = (Color*)malloc(1024);
-			if(palette == NULL) goto ALLOC_ERR; }
-	} 	return ERR_NONE;	
-}
-
-
-
-
 
 }

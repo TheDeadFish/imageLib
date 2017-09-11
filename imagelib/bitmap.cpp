@@ -25,7 +25,7 @@ int Image::GetBitmapInfo(BmInfo256& bi, bool blitMode) const
 		bi.bV5Width = width; bi.bV5Height = height;
 		bi.bV5BitCount = calcNBits(colType | HAS_COLOR);
 		if(hasAlpha()) {
-			bi.bV5Size = sizeof(BITMAPINFOHEADER);
+			bi.bV5Size = sizeof(BITMAPV5HEADER);
 			bi.bV5Compression = BI_BITFIELDS;
 			bi.bV5RedMask = 0x00FF0000;		bi.bV5GreenMask = 0x0000FF00;
 			bi.bV5BlueMask = 0x000000FF;	bi.bV5AlphaMask = 0xFF000000; 

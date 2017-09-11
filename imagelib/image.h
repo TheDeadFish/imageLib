@@ -32,7 +32,7 @@ namespace ImageLib{
 			HAS_PALETTE = 8, HAS_RGBA = 3 };
 		enum { MODE_ARGB8 = 0, MODE_ARGB16 = 4, MODE_INDEX = 8 };
 		int colorMode() { return colType & (HAS_16BIT | HAS_PALETTE); }
-		
+		int alphaType() const;
 		
 		// high level types
 		enum { TYPE_INDEX = HAS_PALETTE, TYPE_GRY8 = 0, TYPE_AGRY8 = HAS_ALPHA,
@@ -42,7 +42,7 @@ namespace ImageLib{
 			TYPE_ARGB16 = HAS_16BIT | HAS_COLOR | HAS_ALPHA 
 		};
 			
-		int calcNBits(u8 colType_) const; 
+		int calcNBits(int colType_) const; 
 		int calcNBits() const { return calcNBits(colType); }
 		bool hasPalette(void) const { return colType & HAS_PALETTE; }
 		bool hasAlpha() const { return !hasPalette() && (colType & HAS_ALPHA); }
@@ -127,7 +127,7 @@ namespace ImageLib{
 			
 		// saving interface
 		enum { FORMAT_BITMAP, FORMAT_PNG };
-		int Save(LPCTSTR fName, int format, void* opts = 0);
+		int Save(LPCSTR fName, int format, void* opts = 0);
 		int Save(xarray<byte>& data, int format, void* opts = 0);
 		int Save(FileOut* fo, int format, void* opts = 0);
 
@@ -143,13 +143,18 @@ namespace ImageLib{
 	public:
 		// Creation
 		ImageObj();	~ImageObj(); void Delete(void);
-		int Create(uint w, int h, u8 colType,
-			u8 nBits = 0, bool dibMode = 0);
-		int Create(uint w, int h, u8 colType);
+		int Create(uint w, int h, int colType,
+			int nBits, BOOL dibMode = 0);
+		int Create(uint w, int h, int colType);
 		int CreateDib(uint w, int h, bool alpha = 0);
 		
+		// Indexed Creation
+		int Create(uint w, int h, Color* p, 
+			int psz, BOOL dibMode = 0);
+		int Create(const Image& that, Color* p, int psz);
+		
 		int Load(void* data, int size);
-		int Load(LPCTSTR file); int FromClip(HWND hwnd);
+		int Load(LPCSTR file); int FromClip(HWND hwnd);
 		int FromBmInfo(LPBITMAPV5HEADER bi, BYTE* imgData);
 		
 		// Soul transferance
@@ -177,7 +182,7 @@ namespace ImageLib{
 
 	private:
 		HDC hdc;
-		int alloc_(bool dibMode); void resetObj();
+		void resetObj();
 		void CopyBmBuffer(byte* imgData, int biHeight);
 		void Copy(const Image& that);
 		int LoadBmp(void* data, int len);

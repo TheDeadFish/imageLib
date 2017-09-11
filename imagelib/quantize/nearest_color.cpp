@@ -182,24 +182,63 @@ void nearest_color::convLine32ToIdx(byte* src, byte* dst, int width)
 	while(--width >= 0) { WRI(dst, nearest(RDI(PI(src)))); }
 }
 
+void nearest_color::convLine32To32(byte* src, byte* dst, int width)
+{
+	while(--width >= 0) { WRI(PI(dst), nearest(RDI(PI(src))).color); }
+}
+
 void nearest_conv(Image& src, Image& dst, 
 	LineConvFunc2 fn, size_t arg)
 {
-	assert((dst.palSize != 0)
-	&&(src.width == dst.width)
-	&&(src.height == dst.height));
-	byte* lineBuff = xmalloc(dst.width*4);
+	assert(dst.palSize != 0); nearest_conv(src,
+		dst, dst.palette, dst.palSize, fn, arg);
+}
+
+void nearest_conv(Image& src, Image& dst, Color* pal,
+	int psz, LineConvFunc2 fn, size_t arg)
+{
+	byte* lineBuff = xmalloc(max
+		(src.width, dst.height)*4);
 	SCOPE_EXIT(free(lineBuff));
-	nearest_color nc(dst.palette, dst.palSize);
+	uint width = min(src.width, dst.width);
+	int height = min(src.height, dst.height);
+	nearest_color nc(pal, psz);
 	
 	int dst_pitch = dst.pitch; 
 	byte* dstPos = dst.bColors;
 	byte* srcPos = src.bColors;
-	int height = src.height; VARFIX(height);
-	while(--height >= 0) {
+	VARFIX(height); while(--height >= 0) {
 		byte* line = convLineTo32(src, srcPos, lineBuff);
-		line = fn(line, lineBuff, arg, src.width);
-		nc.convLine32ToIdx(line, dstPos, src.width); 
+		line = fn(line, lineBuff, arg, width);
+		if(dst.colType == dst.TYPE_INDEX) {
+			nc.convLine32ToIdx(line, dstPos, width); 
+		} else { nc.convLine32To32(line, dstPos, width); }
 		srcPos += src.pitch; dstPos += dst_pitch; }
 }
+
+int nearest_conv(ImageObj& img, Color* pal, 
+	int psz, LineConvFunc2 fn, size_t arg)
+{
+	if(img.colType == Image::TYPE_INDEX) {
+		nearest_conv(img, img, pal, psz, fn, arg);
+		img.setPalette(pal, psz); }
+	else { ImageObj img2; IFRET(img2.Create(img, pal, psz));
+		nearest_conv(img, img2, fn, arg); img2.Swap(img); }
+	return 0;
+}
+
+int nearest_conv32(ImageObj& img, Color* pal, 
+	int psz, LineConvFunc2 fn, size_t arg)
+{
+	if(img.colorMode() == Image::MODE_ARGB8) {
+		nearest_conv(img, img, pal, psz, fn, arg); }
+	else { ImageObj img2; IFRET(img2.Create(img.width, 
+		img.height, Image::TYPE_RGB8)); nearest_conv(
+		img, img2, pal, psz, fn, arg); img2.Swap(img); }
+		
+	// set alpha mode
+	if(pal->alphaType(psz) >= 0)	
+		img.colType |= Image::HAS_ALPHA;
+}
+
 }

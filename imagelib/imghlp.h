@@ -36,7 +36,7 @@ struct NotRect : Rect
 
 
 
-int snapToBits(int val);
+SHITCALL int snapToBits(int val);
 
 
 // bitmap helpers

@@ -89,6 +89,24 @@ COLORX_DEFFUNC(int, ::diff3(const ColorX_& that),
 		(g - that.g) + (b - that.b)*(b - that.b);
 })
 
+COLORX_DEFFUNC(int, ::alphaType(int length),
+{
+	if(length == 0) return -1;
+	mem_t first = this->GetA();
+	for(int i = 0; i < length; i++) {
+		if(this[i].GetA() != first) return 0; }
+	if(first == mem_t(-1)) return -1;
+	if(first == 0) return 1; return 0;
+})
+
+COLORX_DEFFUNC(int, ::alphaType(int w, int h, int p),
+{
+	auto* linePos = this; int type = -1;
+	while(--h >= 0) { int t2 = linePos->alphaType(w);
+		if(type != t2) { if(!t2) return t2;
+			if(linePos != this) break; type = t2;
+		} PTRADD(linePos, p); } return type;
+})
 
 // Color sort forward
 static int color_sort0(const void* a, const void* b) { return RB(a,0) - RB(b,0); }

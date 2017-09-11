@@ -7,7 +7,7 @@ Rect NotRect::Get(int step, const Rect& rc, int width, int height)
 {	Rect This; return GetX<1>(This,	step, rc, width, height); }
 
 
-int snapToBits(int val) { return (val > 16) ? 8 :
+SHITCALL int snapToBits(int val) { return (val > 16) ? 8 :
 	(val > 4) ? 4: (val > 2) ? 2 : 1; }
 
 // pack indexed lines to 1/2/4 bits
