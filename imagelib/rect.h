@@ -21,8 +21,8 @@ struct Rect : RECT
 	
 	LONG Width() const; 
 	LONG Height() const;
-	Rect clipRect(LONG width, LONG height) const;
-	Rect clipRect(const RECT& that) const;
+	//Rect clipRect(LONG width, LONG height) const;
+	//Rect clipRect(const RECT& that) const;
 	int negExtX() const; int negExtY() const;
 	
 	// Its sad that its come to this
@@ -58,6 +58,7 @@ inline LONG Rect::Width() const {
 inline LONG Rect::Height() const {
 	return bottom-top; }
 	
+/*
 inline Rect Rect::clipRect(LONG width, LONG height) const{
 	return clipRect(Rect(0, 0, width, height)); }
 inline Rect Rect::clipRect(const RECT& that) const {
@@ -71,6 +72,9 @@ inline Rect Rect::clipRect(const RECT& that) const {
 	if(result.top > result.bottom)
 		result.top = result.bottom;
 	return result; }
+*/
+	
+	
 inline int Rect::negExtX() const {
 	return -std::min(left, (LONG)0); }
 inline int Rect::negExtY() const {

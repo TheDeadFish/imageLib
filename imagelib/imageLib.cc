@@ -36,4 +36,10 @@ int FileOut::reserve(int len) {
 		curPos = data; maxSize = len;
 	} return Image::ERR_NONE;
 }
+
+BOOL REGCALL(2) clipRect(RECT& dst, const RECT& src, int x, int y) {
+	RECT rc = {0,0,x,y}; return IntersectRect(&dst, &src, &rc); }
+BOOL REGCALL(1) clipRect(RECT& dst, int x, int y) {
+	return clipRect(dst, dst, x, y); }
+
 }

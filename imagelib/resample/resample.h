@@ -12,7 +12,7 @@ enum ResampleType {
 	RESAMPLE_BICUBIC
 };
 
-Rect Resize_FixAspect(
+RECT Resize_FixAspect(
 	int newWidth, int newHeight,
 	int oldWidth, int oldHeight);
 
@@ -30,12 +30,11 @@ __stdcall int Resample(ImageObj& dst, const Image& src,
 	DWORD bkgnd, int w, int h, int mode );
 // Resize/Resample core
 __stdcall int ResizeResample(ImageObj& img, const Image& src,
-	DWORD bkgnd, int w, int h, const Rect& rc, int mode);
+	DWORD bkgnd, int w, int h, const RECT& dstRc, int mode);
 
 // Resample Core
-__stdcall void Resample_Copy(Image& dst, const Image& src);
-__stdcall void Resample_Pixel(Image& dst, const Image& src);
-__stdcall bool Resample_Bilinear(Image& dst, const Image& src);
-__stdcall bool Resample_Bicubic(Image& dst, const Image& src);	
+__stdcall void Resample_Pixel(Image& dst, const RECT& dstRc, const Image& src);
+__stdcall bool Resample_Bilinear(Image& dst, const RECT& dstRc, const Image& src);
+__stdcall bool Resample_Bicubic(Image& dst, const RECT& dstRc, const Image& src);	
 }
 #endif

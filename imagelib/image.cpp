@@ -30,11 +30,9 @@ uint Image::calcBpp(uint colType, uint nBpc)
 Image& Image::initRef(const Image& that) {
 	memcpyX(this, &that, 1); return *this; }
 Image& Image::initRef(const Image& that, const Rect& rc0)
-{	Rect rc = that.clipRect(rc0);
+{	memcpyX(this, &that, 1); Rect rc; that.clipRect(rc, rc0);
 	bColors = (byte*)that.getPtr(rc.left, rc.top);
-	width = rc.Width(); height = rc.Height();
-	palette = that.palette;	pitch = that.pitch;
-	CAST(u32, palSize) = CAST(u32, that.palSize); }
+	width = rc.Width(); height = rc.Height(); }
 	
 int Image::initSize(uint w, uint h, uint colType, uint nBits)
 {
@@ -195,5 +193,19 @@ void ImageObj::setPalette(Color* palette, uint palSize)
 	if(hdc) { SetDIBColorTable(hdc,
 		0, palSize, (RGBQUAD*)palette); }
 }
+
+BOOL Image::clipRect(RECT& dst, const RECT& src) const {
+	RECT rc = {0,0,width,height}; 
+	return IntersectRect(&dst, &src, &rc); }
+	
+const byte* Image::getPtr(int x, int y) const {
+	const byte* line = getLn(y);
+	if(hasPalette()) return line+x;
+	ei(colType & HAS_16BIT) return line+x*8;
+	else return line+x*4; }
+
+ASM_FUNC("Image_pixSize", "movzbl 22(%eax), %eax;"
+	"test $8, %al; jne 1f; and $8, %eax; add $4, "
+	"%eax; ret; 1: mov $1, %eax; ret;");
 
 }

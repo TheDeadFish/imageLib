@@ -1,3 +1,3 @@
 call egcc.bat
-gcc -I. test.cc %CCFLAGS2% -lgdi32 -lz -fno-strict-overflow -limgLib -lstdshit -lz -lgdi32
+gcc -I. resamp.cc %CCFLAGS2% -lgdi32 -lz -fno-strict-overflow -limgLib -lstdshit -lz -lgdi32
 

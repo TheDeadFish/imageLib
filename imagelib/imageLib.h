@@ -25,6 +25,16 @@ struct FileOut {
 class Image;
 class ImageObj;
 
+BOOL REGCALL(2) clipRect(RECT& dst, const RECT& src, int x, int y);
+BOOL REGCALL(1) clipRect(RECT& dst, int x, int y);
+
+
+// rect helpers
+static LONG RECT_W(const RECT& rc) { return rc.right-rc.left; }
+static LONG RECT_H(const RECT& rc) { return rc.bottom-rc.top; }
+
+TMPL(T) const T* pCnst(T* val) { return val; }
+
 }
 
 #include "rect.h"

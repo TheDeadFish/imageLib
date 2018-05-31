@@ -20,9 +20,9 @@ namespace ImageLib{
 			byte* bColors;		// indexed color array
 		};
 		Color* palette;			// Palette colors
-		int pitch;				// Pitch of image
-		u16 width;				// Width of image
-		u16 height;				// Height of image
+		u32 pitch;				// Pitch of image
+		u32 width;				// Width of image
+		u32 height;				// Height of image
 		u16 palSize;			// Size of pallete
 		u8 colType;				// color type
 		u8 nBits;				// original bit depth
@@ -51,11 +51,13 @@ namespace ImageLib{
 		
 		// geometry / pixel access
 		int nPixels() { return width * height; }
-		int pixSize() const { return ((colType & HAS_PALETTE)
-			? 1 : 4) + (colType & HAS_16BIT); }
+		int pixSize() const { int sz; asm("call "
+			"Image_pixSize" : "=a"(sz) : "a"(this)); return sz;}
 		int sizeExtra8(int) const;	int sizeExtra32(int) const;
 		int sizeExtra8() const;	int sizeExtra32() const;
-		Rect clipRect(const Rect& rc) const; Rect getRect() const;
+		BOOL clipRect(RECT& dst, const RECT& src) const; 
+		
+		Rect getRect() const;
 		SIZE clipRect2(RECT& out, const Rect& rc) const;
 		CONST_FUNC2( TMPL(F), void for_each8(const Rect& rc, F fn));
 		CONST_FUNC2( TMPL(F), void for_each32(const Rect& rc, F fn));
@@ -216,19 +218,18 @@ namespace ImageLib{
 	
 	
 	inline Rect Image::getRect() const			{ return Rect(0,0,width,height); }
-	inline Rect Image::clipRect(const Rect& rc) const 
-		{	return rc.clipRect(width, height); }
 	inline bool Image::chkPos(uint x, uint y) const { return ((x < width)&&(y < height)); }
 	
 	// IMPLEMENTATION:  pixel access
 	CONST_FUNC3(inline, byte* Image::EndPtr(), { return getLn(height); })
 	CONST_FUNC3(inline, byte* Image::getLn(int y), { return bColors+y*pitch; });
-	CONST_FUNC3(inline, byte* Image::getPtr(int x, int y), { return getLn(y)+x*pixSize(); });
+	//CONST_FUNC3(inline, byte* Image::getPtr(int x, int y), { return getLn(y)+x*pixSize(); });
 	CONST_FUNC3(inline, byte* Image::get8(int x, int y), { return getLn(y)+x; });
 	CONST_FUNC3(inline, Color* Image::get32(int x, int y), { return ((Color*)getLn(y))+x; });
 	
 	
-	
+	inline byte* Image::getPtr(int x, int y) { 
+		return (byte*)pCnst(this)->getPtr(x, y); }
 	
 	/*
 	CONST_FUNC3(inline, byte* Image::GetPtr(int x, int y), {

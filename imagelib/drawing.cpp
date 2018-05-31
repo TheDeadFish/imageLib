@@ -17,20 +17,6 @@ void Image::fillImage(DWORD color)
 			Color(color));	PTRADD(dstLine, pitch); }}
 }
 
-POINT REGCALL(1) clipRectX(POINT& pos,
-	const RECT& rc0, LPARAM size)
-{
-	POINT y = { rc0.top, rc0.bottom };
-	if(y.x > y.y) swapReg(y.x, y.y);
-	max_ref(y.x, 0); min_ref(y.y, HIWORD(size));
-	pos.y = y.x; y.y -= y.x;
-	POINT x = { rc0.left, rc0.right };
-	if(x.x > x.y) swapReg(x.x, x.y);
-	max_ref(x.x, 0); min_ref(x.y, LOWORD(size));
-	pos.x = x.x; return POINT {x.y-x.x, y.y}; 
-}
-
-
 static RECT flipRect(const RECT& rc0)
 {	RECT rc = rc0; if(rc.left > rc.right) swapReg(rc.left, rc.right);
 	if(rc.top > rc.bottom) swapReg(rc.top, rc.bottom); return rc; }
@@ -38,19 +24,15 @@ static RECT flipRect(const RECT& rc0)
 void Image::fillRect(
 	const RECT& rc0, DWORD color)
 {
-	// clip rectangle
-	POINT pos; POINT len = clipRectX(
-		pos, rc0, CAST(LPARAM, width));
-	if((len.x <= 0)||(len.y <= 0)) return;
+	RECT rc; clipRect(rc, rc0); 
+	byte* dstLine = getPtr(rc.left, rc.top);
+	int count = RECT_H(rc); int width = RECT_W(rc);
 	
-	// draw the rectangle
-	if(palSize != 0) { byte* dstLine = get8(pos.x, pos.y);
-		while(len.y--) { memset(dstLine, color, len.x);
-			PTRADD(dstLine, pitch); }
-	}else { Color* dstLine = get32(pos.x, pos.y);
-		while(len.y--) { std::fill(dstLine, dstLine+len.x,
-			Color(color)); PTRADD(dstLine, pitch); }
-	}
+	while(--count >= 0) { if(hasPalette()) {
+			memfillX(dstLine, width, color);
+		} else { memfillX((DWORD*)dstLine, 
+			width, color); }
+		PTRADD(dstLine, pitch); }
 }
 
 void Image::fillNotRect(const RECT& rc, DWORD color)
