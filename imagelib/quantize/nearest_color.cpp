@@ -239,6 +239,7 @@ int nearest_conv32(ImageObj& img, Color* pal,
 	// set alpha mode
 	if(pal->alphaType(psz) >= 0)	
 		img.colType |= Image::HAS_ALPHA;
+	return 0;
 }
 
 }

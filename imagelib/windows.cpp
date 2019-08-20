@@ -73,6 +73,7 @@ int ImageObj::FromClip(HWND hwnd)
 
 int Image::ToClip(HWND hwnd)
 {
+	return 0;
 	/*HGLOBAL hglb;
 	PBITMAPINFO bi;
 	

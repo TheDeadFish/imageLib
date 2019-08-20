@@ -12,7 +12,7 @@ inline DWORD64 RGB16B_BGRA16(void* data) {
 inline DWORD64 RGBA16B_BGRA16(void* data) {
 	DWORD hi = bswap32((*(u16*)data+6) | (*(u16*)data << 16));
 	return MAKEDWORD64(bswap32(*(u32*)(data+2)), hi); }
-inline DWORD BGRA16_BGRA(void* src, void* dst) { clobber(eax); clobber(ecx); 
+inline void BGRA16_BGRA(void* src, void* dst) { clobber(eax); clobber(ecx); 
 	byte a = RB(src,1); byte c = RB(src,3); RB(dst,0) = a; RB(dst,1) = c;
 	a = RB(src,5); c = RB(src,7); RB(dst,2) = a; RB(dst,3) = c;	}
 
@@ -86,15 +86,15 @@ struct Color16 : ColorX_<WORD, DWORD64>
 	static DWORD64 swapOrder(DWORD64 val) { DWORD x = val; DWORD y = val>>32;
 		asm("xchg %w0, %w1" : "+r"(x), "+r"(y)); return x | DWORD64(y)<<32; }
 		
-	setRGB(DWORD64 rgb) { setRGBA(rgb | 0xFF000000); }
-	setRGBA(DWORD64 rgb) { Value = swapOrder(rgb); }
+	void setRGB(DWORD64 rgb) { setRGBA(rgb | 0xFF000000); }
+	void setRGBA(DWORD64 rgb) { Value = swapOrder(rgb); }
 	
 	
 	// big endian setters
-	setGRY16B(u16 v) { v = bswap16(v); SetValue(-1, v, v, v); }
-	setGRYA16B(u16 a, u16 v) { v = bswap16(v); SetValue(bswap16(a), v, v, v); }
-	setRGB16B(void* p) { Value = RGB16B_BGRA16(p); }
-	setRGBA16B(void* p) { Value = RGBA16B_BGRA16(p); }
+	void setGRY16B(u16 v) { v = bswap16(v); SetValue(-1, v, v, v); }
+	void setGRYA16B(u16 a, u16 v) { v = bswap16(v); SetValue(bswap16(a), v, v, v); }
+	void setRGB16B(void* p) { Value = RGB16B_BGRA16(p); }
+	void setRGBA16B(void* p) { Value = RGBA16B_BGRA16(p); }
 };
 
 struct Color : ColorX_<BYTE, DWORD>
@@ -103,8 +103,8 @@ struct Color : ColorX_<BYTE, DWORD>
 
 	operator RGBQUAD() const { return *(RGBQUAD*)this; }
 	COLORREF colorRef() { return bswap32(Value)>>8; }
-	setRGB(void* p) { Value = swapOrder(*(u32*)p | 0xFF000000); }
-	setRGBA(void* p) { Value = swapOrder(*(u32*)p); }
+	void setRGB(void* p) { Value = swapOrder(*(u32*)p | 0xFF000000); }
+	void setRGBA(void* p) { Value = swapOrder(*(u32*)p); }
 	Color() = default;
 	constexpr Color(BYTE R, BYTE G, BYTE B) : Color(-1, R, G, B) {}
 	constexpr Color (BYTE A, BYTE R, BYTE G, BYTE B) : 

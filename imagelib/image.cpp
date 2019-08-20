@@ -32,7 +32,7 @@ Image& Image::initRef(const Image& that) {
 Image& Image::initRef(const Image& that, const Rect& rc0)
 {	memcpyX(this, &that, 1); Rect rc; that.clipRect(rc, rc0);
 	bColors = (byte*)that.getPtr(rc.left, rc.top);
-	width = rc.Width(); height = rc.Height(); }
+	width = rc.Width(); height = rc.Height();  return *this; }
 	
 int Image::initSize(uint w, uint h, uint colType, uint nBits)
 {

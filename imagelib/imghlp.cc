@@ -110,6 +110,8 @@ linePackFunc2_t __stdcall lineDeintFunc(u8 u8colType, u8 bpp)
 		case 16: return convLine16To64_; case 32: return convLine32To64_;
 		case 48: return convLine48To64_; case 64: return convLine64To64_; }		
 	}
+	
+	__builtin_unreachable();
 }
 
 byte* REGCALL(2) convLineTo32(
