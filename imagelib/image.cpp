@@ -142,7 +142,7 @@ int ImageObj::Load(LPCSTR fName)
 {
 	// load file
 	auto file = loadFile(fName); if(file == NULL) return 
-		isNeg(file.size) ? NOT_FOUND : ERR_ALLOC;
+		isNeg(file.size()) ? NOT_FOUND : ERR_ALLOC;
 	SCOPE_EXIT(free(file.data));
 	return Load(file.data, file.size);
 }
