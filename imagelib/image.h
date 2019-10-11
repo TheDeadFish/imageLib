@@ -157,7 +157,7 @@ namespace ImageLib{
 		
 		int Load(void* data, int size);
 		int Load(LPCSTR file); int FromClip(HWND hwnd);
-		int FromBmInfo(LPBITMAPV5HEADER bi, BYTE* imgData);
+		int FromBmInfo(LPBITMAPV5HEADER bi, BYTE** imgData);
 		
 		// Soul transferance
 		int Create(const Image& that, bool dibMode = 0);

@@ -97,11 +97,12 @@ int ImageObj::LoadBmp(void* data, int size)
 	if((bmHdr->bfType != 0x4D42)
 	||(bmHdr->bfSize != size))
 		return BAD_IMAGE;
-	return FromBmInfo(Void(bmHdr+1),
-		Void(bmHdr)+bmHdr->bfOffBits);
+	
+	BYTE* imgData = Void(bmHdr)+bmHdr->bfOffBits;
+	return FromBmInfo(Void(bmHdr+1), &imgData);
 }
 
-int ImageObj::FromBmInfo(LPBITMAPV5HEADER bi, BYTE* imgData)
+int ImageObj::FromBmInfo(LPBITMAPV5HEADER bi, BYTE** imgData_)
 {
 	// process header
 	int hdrsz = ((bi->bV5Compression == BI_BITFIELDS)
@@ -109,7 +110,8 @@ int ImageObj::FromBmInfo(LPBITMAPV5HEADER bi, BYTE* imgData)
 	Color* colTable = Void(bi) + hdrsz;
 	int biClrUsed = (bi->bV5BitCount > 8) ? 0 :
 		bi->bV5ClrUsed ? bi->bV5ClrUsed : 1<<bi->bV5BitCount;
-	if(!imgData) imgData = (BYTE*)&colTable[biClrUsed];
+	BYTE* imgData = (BYTE*)&colTable[biClrUsed];
+	if(imgData_ && *imgData_) imgData = *imgData_;
 
 	// process bitfields
 	bool hasAplha = false;
@@ -159,6 +161,9 @@ int ImageObj::FromBmInfo(LPBITMAPV5HEADER bi, BYTE* imgData)
 			unpackLine(imgData, dst, width);
 			imgData += biPitch; dst += invPitch; }		
 	}
+	
+	if(imgData_)
+		*imgData_ = imgData;
 
 	/* determin alpha type
 	if(bi->biBitCount == 32)
